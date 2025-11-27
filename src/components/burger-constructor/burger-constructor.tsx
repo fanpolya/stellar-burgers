@@ -38,11 +38,14 @@ export const BurgerConstructor: FC = () => {
       ...ingredients.map((ingredient) => ingredient._id),
       bun._id
     ];
-    dispatch(newOrder(ingredientIds));
+    dispatch(newOrder(ingredientIds))
+      .unwrap()
+      .then(() => {
+        dispatch(clearConstructor());
+      });
   };
   const closeOrderModal = () => {
     dispatch(clearOrder());
-    dispatch(clearConstructor());
     navigate('/');
   };
 
