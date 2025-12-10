@@ -37,4 +37,9 @@ export type TUser = {
   name: string;
 };
 
+export type TLoginData = {
+  email: string;
+  password: string;
+};
+
 export type TTabMode = 'bun' | 'sauce' | 'main';
