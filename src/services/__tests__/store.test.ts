@@ -1,16 +1,23 @@
-import store from '../store';
+import { rootReducer } from '../store';
 
 describe('rootReducer', () => {
-  it('должен корректно инициализироваться', () => {
-    const state = store.getState();
+  it('возвращает начальное состояние при вызове с undefined и неизвестным экшеном', () => {
+    const state = rootReducer(undefined, { type: 'UNKNOWN_ACTION' });
 
-    expect(state).toBeDefined();
+    expect(Object.keys(state)).toEqual([
+      'ingredients',
+      'burgerConstructor',
+      'order',
+      'orders',
+      'feed',
+      'user'
+    ]);
 
-    expect(state).toHaveProperty('ingredients');
-    expect(state).toHaveProperty('burgerConstructor');
-    expect(state).toHaveProperty('order');
-    expect(state).toHaveProperty('orders');
-    expect(state).toHaveProperty('feed');
-    expect(state).toHaveProperty('user');
+    expect(state.ingredients).toBeDefined();
+    expect(state.burgerConstructor).toBeDefined();
+    expect(state.order).toBeDefined();
+    expect(state.orders).toBeDefined();
+    expect(state.feed).toBeDefined();
+    expect(state.user).toBeDefined();
   });
 });

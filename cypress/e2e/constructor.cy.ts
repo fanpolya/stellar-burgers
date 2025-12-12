@@ -1,9 +1,10 @@
-const TEST_URL = 'http://localhost:4000';
 const addButton = 'button:contains("Добавить")';
 
 const SELECTORS = {
   constructor: '[data-cy="burger-constructor"]',
-  ingredient: '[data-cy="ingredient"]',
+  bunItem: '[data-cy="ingredient-bun-643d69a5c3f7b9001cfa093c"]',
+  mainItem: '[data-cy="ingredient-main-643d69a5c3f7b9001cfa0941"]',
+  sauceItem: '[data-cy="ingredient-sauce-643d69a5c3f7b9001cfa0942"]',
   orderButton: '[data-cy="order-button"]',
   modal: '[data-cy="modal"]',
   modalOverlay: '[data-cy="modal-overlay"]',
@@ -23,26 +24,14 @@ describe('Stellar Burger Constructor', () => {
     cy.clearLocalStorage();
 
     // Моки API
-    cy.intercept('GET', '/api/ingredients', {
-      fixture: 'ingredients.json'
-    }).as('getIngredients');
+    cy.intercept('GET', '/api/ingredients', { fixture: 'ingredients.json' }).as('getIngredients');
+    cy.intercept('GET', '/api/auth/user', { fixture: 'user.json' }).as('getUser');
+    cy.intercept('POST', '/api/orders', { fixture: 'order.json' }).as('createOrder');
+    cy.intercept('POST', '/api/auth/token', { fixture: 'refresh-token.json' }).as('refreshToken');
 
-    cy.intercept('GET', '/api/auth/user', {
-      fixture: 'user.json'
-    }).as('getUser');
-
-    cy.intercept('POST', '/api/orders', {
-      fixture: 'order.json'
-    }).as('createOrder');
-
-    cy.intercept('POST', '/api/auth/token', {
-      fixture: 'refresh-token.json'
-    }).as('refreshToken');
-
-    // Симуляция авторизации
     cy.setCookie('accessToken', 'test-access-token');
 
-    cy.visit(TEST_URL, {
+    cy.visit('/', {
       onBeforeLoad(win) {
         win.localStorage.setItem('refreshToken', 'test-refresh-token');
       }
@@ -51,12 +40,15 @@ describe('Stellar Burger Constructor', () => {
     cy.wait('@getIngredients');
 
     cy.get(SELECTORS.constructor).should('exist').as('constructorArea');
-    cy.get(SELECTORS.ingredient).as('ingredientsList');
+    cy.get(SELECTORS.bunItem).as('bunItem');
+    cy.get(SELECTORS.mainItem).as('mainItem');
+    cy.get(SELECTORS.sauceItem).as('sauceItem');
     cy.get(SELECTORS.orderButton).as('orderButton');
+  });
 
-    cy.get('@ingredientsList').contains(INGREDIENTS.bun).parent().as('bunItem');
-    cy.get('@ingredientsList').contains(INGREDIENTS.main).parent().as('mainItem');
-    cy.get('@ingredientsList').contains(INGREDIENTS.sauce).parent().as('sauceItem');
+  afterEach(() => {
+    cy.clearCookies();
+    cy.clearLocalStorage();
   });
 
   describe('Добавление ингредиентов', () => {
@@ -81,6 +73,23 @@ describe('Stellar Burger Constructor', () => {
       cy.get(SELECTORS.modalOverlay).click({ force: true });
       cy.get(SELECTORS.modal).should('not.exist');
     });
+
+    it('закрытие модалки по клавише Esc', () => {
+      cy.get('@mainItem').click();
+      cy.get(SELECTORS.modal).should('exist');
+
+      cy.get('body').type('{esc}');
+      cy.get(SELECTORS.modal).should('not.exist');
+    });
+
+    it('отображение данных выбранного ингредиента', () => {
+      cy.get('@bunItem').click();
+      cy.get(SELECTORS.modal).should('contain', INGREDIENTS.bun);
+      cy.get(SELECTORS.closeButton).click();
+
+      cy.get('@mainItem').click();
+      cy.get(SELECTORS.modal).should('contain', INGREDIENTS.main);
+    });
   });
 
   describe('Создание заказа', () => {
@@ -90,7 +99,6 @@ describe('Stellar Burger Constructor', () => {
       cy.get('@sauceItem').find(addButton).click();
 
       cy.get('@orderButton').should('not.be.disabled').click();
-
       cy.wait('@createOrder');
 
       cy.get(SELECTORS.modal).should('be.visible');
